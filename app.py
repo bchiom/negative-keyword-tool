@@ -47,12 +47,12 @@ def classify_with_gpt(search_term):
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=10
+            max_tokens=100
         )
         classification = response.choices[0].message.content.strip()
         if classification not in ["Relevant", "Irrelevant"]:
             return "Unknown"
-        time.sleep(5)  # Rate limiting to avoid API quota issues
+        time.sleep(10)  # Rate limiting to avoid API quota issues
         return classification
     except Exception as e:
         st.error(f"API Error for term '{search_term}': {e}")
