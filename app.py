@@ -52,7 +52,7 @@ def classify_with_gpt(search_term):
         classification = response.choices[0].message.content.strip()
         if classification not in ["Relevant", "Irrelevant"]:
             return "Unknown"
-        time.sleep(1)  # Rate limiting to avoid API quota issues
+        time.sleep(5)  # Rate limiting to avoid API quota issues
         return classification
     except Exception as e:
         st.error(f"API Error for term '{search_term}': {e}")
