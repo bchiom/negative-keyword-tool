@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-import openai
+from openai import OpenAI
 import time
 
 # --- CONFIGURE STREAMLIT PAGE ---
@@ -17,7 +17,7 @@ if not openai_api_key:
     st.stop()
 
 # ✅ Initialize OpenAI client
-openai.api_key = openai_api_key
+client = OpenAI(api_key=openai_api_key)
 
 # --- SIDEBAR FOR FILE UPLOAD ---
 st.sidebar.header("Upload Google Ads Search Term Report")
@@ -44,7 +44,7 @@ def classify_with_gpt(search_term):
     Answer only 'Relevant' or 'Irrelevant'.
     """
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=10
@@ -98,4 +98,3 @@ if uploaded_file:
             file_name="negative_keywords.csv",
             mime="text/csv",
         )
-
