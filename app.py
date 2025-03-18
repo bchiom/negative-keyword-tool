@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import google.generativeai as genai
+import time
 
 # --- CONFIGURE STREAMLIT PAGE ---
 st.set_page_config(page_title="Negative Keyword Tool", page_icon="🔍")
@@ -34,7 +35,7 @@ def classify_negative_keywords(data):
     data["Negative"] = (data["CTR (%)"] < CTR_THRESHOLD) & (data["Conversions"] <= CONVERSION_THRESHOLD)
     return data
 
-# --- FUNCTION: GEMINI NLP ANALYSIS FOR CONTEXT FILTERING WITH ERROR HANDLING ---
+# --- FUNCTION: GEMINI NLP ANALYSIS FOR CONTEXT FILTERING WITH RATE LIMITING ---
 def classify_with_gemini(search_term):
     prompt = f"""
     Classify the following search term as 'Relevant' or 'Irrelevant' for a Google Ads campaign:
@@ -48,6 +49,7 @@ def classify_with_gemini(search_term):
         classification = response.text.strip()
         if classification not in ["Relevant", "Irrelevant"]:
             return "Unknown"
+        time.sleep(0.5)  # Rate limiting to avoid API quota issues
         return classification
     except Exception as e:
         st.error(f"API Error for term '{search_term}': {e}")
