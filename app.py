@@ -17,7 +17,7 @@ if not gemini_api_key:
 
 # ✅ Initialize Google Gemini client once globally
 genai.configure(api_key=gemini_api_key)
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-2.0")
 
 # --- SIDEBAR FOR FILE UPLOAD ---
 st.sidebar.header("Upload Google Ads Search Term Report")
