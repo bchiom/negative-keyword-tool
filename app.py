@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-from openai import OpenAI
+import google.generativeai as genai
 import time
 
 # --- CONFIGURE STREAMLIT PAGE ---
@@ -9,15 +9,16 @@ st.set_page_config(page_title="Negative Keyword Tool", page_icon="🔍")
 
 st.title("🔍 Automated Negative Keyword Manager")
 
-# --- GET OPENAI API KEY FROM ENVIRONMENT VARIABLES ---
-openai_api_key = os.getenv("OPENAI_API_KEY")  # ✅ Fetch API key securely
+# --- GET GOOGLE GEMINI API KEY FROM ENVIRONMENT VARIABLES ---
+gemini_api_key = os.getenv("GEMINI_API_KEY")  # ✅ Fetch API key securely
 
-if not openai_api_key:
-    st.error("❌ OpenAI API key is missing. Please set OPENAI_API_KEY in your environment.")
+if not gemini_api_key:
+    st.error("❌ Google Gemini API key is missing. Please set GEMINI_API_KEY in your environment.")
     st.stop()
 
-# ✅ Initialize OpenAI client
-client = OpenAI(api_key=openai_api_key)
+# ✅ Initialize Google Gemini client once globally
+genai.configure(api_key=gemini_api_key)
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 # --- SIDEBAR FOR FILE UPLOAD ---
 st.sidebar.header("Upload Google Ads Search Term Report")
@@ -34,8 +35,8 @@ def classify_negative_keywords(data):
     data["Negative"] = (data["CTR (%)"] < CTR_THRESHOLD) & (data["Conversions"] <= CONVERSION_THRESHOLD)
     return data
 
-# --- FUNCTION: OPENAI GPT ANALYSIS FOR CONTEXT FILTERING WITH RATE LIMITING ---
-def classify_with_gpt(search_term):
+# --- FUNCTION: GEMINI NLP ANALYSIS FOR CONTEXT FILTERING WITH RATE LIMITING ---
+def classify_with_gemini(search_term):
     prompt = f"""
     Classify the following search term as 'Relevant' or 'Irrelevant' for a Google Ads campaign:
     Search Term: {search_term}
@@ -44,15 +45,11 @@ def classify_with_gpt(search_term):
     Answer only 'Relevant' or 'Irrelevant'.
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=10
-        )
-        classification = response.choices[0].message.content.strip()
+        response = model.generate_content(prompt)
+        classification = response.text.strip()
         if classification not in ["Relevant", "Irrelevant"]:
             return "Unknown"
-        time.sleep(120)  # Rate limiting to avoid API quota issues
+        time.sleep(1)  # Rate limiting to avoid API quota issues
         return classification
     except Exception as e:
         st.error(f"API Error for term '{search_term}': {e}")
@@ -74,7 +71,7 @@ if uploaded_file:
     search_data = classify_negative_keywords(search_data)
 
     # Apply NLP filtering
-    search_data["NLP Classification"] = search_data["Search Term"].apply(classify_with_gpt)
+    search_data["NLP Classification"] = search_data["Search Term"].apply(classify_with_gemini)
 
     # Final filtering based on NLP & metrics
     search_data["Final Negative"] = (
